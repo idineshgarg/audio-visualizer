@@ -1,0 +1,432 @@
+<DOCTYPE>
+    <html>
+    
+    <head>
+        <meta content="width=width, initial-scale=1, maximum-scale=1" name="viewport">
+        </meta>
+        <style>
+            html,
+            body {
+                height: 100%;
+                overflow: hidden;
+                background-color: black;
+                font-family: Arial;
+            }
+  
+    
+      
+    
+            audio {
+                position: fixed;
+                left: 10px;
+                bottom: 0;
+                width: calc(100% - 20px);
+                opacity: 1;
+                transition: all 0.5s;
+                display: block;
+            }
+    
+    
+            
+            .controls {
+                left: 0;
+                z-index: 2;
+                padding: 0 20px;
+                bottom: 15px;
+                width: 100%;
+                display: flex;
+                line-height: 1.2;
+                align-items: center;
+                position: absolute;
+                box-sizing: border-box;
+                justify-content: space-between;
+            }
+    
+            .toggle {
+                width: 20px;
+            }
+    
+            .toggle span {
+                display: block;
+                border: 10px solid transparent;
+                border-left: 18px solid #fff;
+                border-right: 0;
+            }
+    
+            .toggle span.paused {
+                border: 0;
+                border-left: 5px solid #fff;
+                border-right: 5px solid #fff;
+                width: 5px;
+                height: 20px;
+            }
+    
+            .player-time {
+                margin-right: 5px;
+                color: #fff;
+                font-size: 16px;
+            }
+    
+            .player-time.total {
+                margin: 0 0 0 5px;
+            }
+    
+            .progress-bar {
+                width: calc(100% - 185px);
+                position: relative;
+            }
+    
+            .progress-bar span {
+                left: 0;
+                top: 50%;
+                height: 5px;
+                width: 0;
+                background-color: #fff;
+                transform: translateY(-50%);
+                position: absolute;
+            }
+    
+            input[type="range"] {
+                width: 100%;
+                z-index: 1;
+                position: relative;
+                appearance: none;
+                background: transparent;
+            }
+    
+            input[type="range"]::-webkit-slider-runnable-track {
+                background: rgba(255, 255, 255, 0.5);
+                height: 5px;
+            }
+    
+            input[type="range"]::-moz-range-track {
+                height: 5px;
+                background: rgba(255, 255, 255, 0.5);
+            }
+    
+            input[type="range"]::-moz-range-thumb {
+                width: 20px;
+                height: 20px;
+                border: 0;
+                margin-top: -8px;
+                appearance: none;
+                border-radius: 50%;
+                background-color: #fff;
+            }
+    
+            input[type="range"]::-webkit-slider-thumb {
+                width: 20px;
+                height: 20px;
+                border: 0;
+                margin-top: -8px;
+                appearance: none;
+                border-radius: 50%;
+                background-color: #fff;
+            }
+    
+            .bars {
+                display: flex;
+                bottom: 50px;
+                width: 100%;
+                gap: 1px;
+                height: calc(100% - 50px);
+                align-items: flex-end;
+                position: fixed;
+                left: 0;
+                top:0;
+                
+            }
+           
+            .bars > div {
+                width: 20px;
+                min-width: calc(100% / 50);
+                height: 0px;
+                background-color: #fff;
+                transition: 0.1s ease-in-out;
+            }
+    
+            .blocks {
+                bottom: 50px;
+                width: 100%;
+                height: calc(100% - 50px);    
+                position: fixed;
+                left: 0;
+                top:0;
+            }
+    
+            .blocks > div {
+                background: transparent;
+                /* width: 5px;
+                height: 5px; */
+                position: fixed;
+                
+            }
+        </style>
+        <script type="application/javascript">
+  
+
+            var play = false;
+            var timeout = undefined;
+  
+            document.addEventListener('message', (e) => {
+              console.log(e);
+              if(e.data === 'play') {
+                  playAudioFunction(true);
+              }
+              else if(e.data === 'pause') {
+                  playAudioFunction(false);
+              }
+          });
+  
+            function playAudio() {
+                if (play) {
+                    var audio = document.getElementById("audio");
+                    audio.pause();
+                    play = false;
+                    document.getElementById('blocks').style.display = 'hidden';
+    
+                } else {
+                    var audio = document.getElementById("audio");
+                    audio.play();
+                    play = true;
+                    document.getElementById('blocks').style.display = 'block';
+                }
+            }
+  
+            function playAudioFunction(audioState) {
+              if (!audioState) {
+                  var audio = document.getElementById("audio");
+                  audio.pause();
+                  play = false;
+                  document.getElementById('blocks').style.display = 'hidden';
+  
+              } else {
+                  var audio = document.getElementById("audio");
+                  audio.play();
+                  play = true;
+                  document.getElementById('blocks').style.display = 'block';
+              }
+          }
+            
+  
+            function formatSecondsAsTime(secs, format = 'hh:mm:ss') {
+                var hr = Math.floor(secs / 3600);
+                var min = Math.floor((secs - (hr * 3600)) / 60);
+                var sec = Math.floor(secs - (hr * 3600) - (min * 60));
+    
+                if (hr < 10) { hr = "0" + hr; }
+                if (min < 10) { min = "0" + min; }
+                if (sec < 10) { sec = "0" + sec; }
+                if (hr) { hr = "00"; }
+    
+                if (format !== null) {
+                    var formatted_time = format.replace('hh', hr);
+                    formatted_time = formatted_time.replace('h', hr * 1 + ""); // check for single hour formatting
+                    formatted_time = formatted_time.replace('mm', min);
+                    formatted_time = formatted_time.replace('m', min * 1 + ""); // check for single minute formatting
+                    formatted_time = formatted_time.replace('ss', sec);
+                    formatted_time = formatted_time.replace('s', sec * 1 + ""); // check for single second formatting
+                    return formatted_time;
+                } else {
+                    return hr + ':' + min + ':' + sec;
+                }
+            }
+       
+    
+            function endDrag(e){
+                audio.currentTime = e;
+            }
+            
+            window.onload = function () {
+                
+              var audio = document.getElementById("audio");
+
+              if(!audio){
+                return;
+              }
+              audio.src = "https://upload.wikimedia.org/wikipedia/commons/4/40/Toreador_song_cleaned.ogg";
+            //   audio.crossOrigin = "anonymous";              
+              
+              var played = false;
+              createBars();
+            //   createRandomBlocks();
+  
+                function createBars(){
+                  const bars = document.getElementById('bars')            
+                  for(let  i =  200 ; i <= 250; i++){
+                          const el = document.getElementById('bar__' + i)
+                          if(!el){
+                              const div = document.createElement('div')
+                              div.id = 'bar__' + i;
+                              bars.appendChild(div);
+                          }
+                  }
+                }
+          
+  
+                
+                audio.onplay = () => {
+                    
+                    visualize(audio);
+                    if(timeout){
+                        clearInterval(timeout);
+                    }
+                    timeout = setInterval(()=>{
+                        // markBlocksAsBlack();
+                        // colorBlocksRandomly();
+                    },100)
+                };
+            
+                audio.onpause = () => {
+                    clearInterval(timeout);
+                    // markBlocksAsBlack();
+                };
+    
+    
+    
+
+    
+                function createRandomBlocks(){
+                    const blocks = document.getElementById('blocks');
+                    if(!blocks){
+                      return;
+                    }
+
+                    const width = window.innerWidth;
+                    const height = window.innerHeight;
+                    const factorX = Math.ceil(width / 50) ?? 1;
+                    console.log(factorX, "factor");
+                    
+                    for(let  i=  0 ; i < width; i = i + factorX){
+                        for(let  j =  0 ; j < height; j = j + factorX){
+                          const ele = document.getElementById('block' + i + '_' + j);
+                          if(!ele){
+                              const div = document.createElement('div')
+                              div.id = 'block' + i + '_' + j;
+                            
+                              div.style.top = j + 'px';
+                              div.style.left = i + 'px';
+                              div.style.width = factorX + 'px';
+                              div.style.height = factorX + 'px';
+                              div.style.backgroundColor = 'transparent';
+                              blocks.appendChild(div);
+                          }
+                        }
+                    }
+                }
+    
+                function colorBlocksRandomly(){   
+                    
+                    const width = window.innerWidth;
+                    const height = window.innerHeight;
+                    const factorX = Math.ceil(width / 50);
+                
+    
+                    for(let  i=  0 ; i <= width; i = i + factorX){
+                        for(let  j =  0 ; j <= height; j = j + factorX){
+                            const div = document.getElementById('block' + i + '_' + j);
+                            if(Math.random() < 0.15 && div){
+                                div.style.backgroundColor = '#000';
+                            }
+                        }
+                    }
+                }
+    
+                function markBlocksAsBlack(){
+                    const width = window.innerWidth;
+                    const height = window.innerHeight
+                    const factorX = Math.ceil(window.innerWidth / 50);
+                    
+                    for(let  i=  0 ; i <= width; i = i + factorX){
+                        for(let  j =  0 ; j <= height; j = j + factorX){
+                            const div = document.getElementById('block' + i + '_' + j);
+                            if(div){
+                                div.style.backgroundColor = 'transparent';
+                            }
+                        }
+                    }
+                }
+    
+            
+
+                function visualize(source) {
+                    if (played) {
+                        return;
+                    }
+                    played = true;
+                    var context = new AudioContext();
+                    var src = context.createMediaElementSource(source);
+                    var analyser = context.createAnalyser();
+                    var listen = context.createGain();
+                    src.connect(listen);
+                    listen.connect(analyser);
+                    analyser.connect(context.destination);
+                    analyser.fftSize = 2 ** 12;
+                    var frequencyBins = analyser.fftSize / 5;
+                    var bufferLength = analyser.frequencyBinCount;
+                    let dataArray = new Uint8Array(bufferLength);
+                    var WIDTH = 250; // total width
+                    var HEIGHT = 260; // total height
+                    var scale = Math.log(frequencyBins - 1) / WIDTH; //
+                    var min = 0;
+                    var factor = 2;
+    
+                    renderFrame();
+    
+                    function renderFrame() {
+                        requestAnimationFrame(renderFrame);
+    
+                        analyser.smoothingTimeConstant = 0.01;
+                        listen.gain.setValueAtTime(1, context.currentTime);
+                   
+                        analyser.getByteFrequencyData(dataArray);
+                        
+                        for (var i = 0; i < bufferLength; i++) {
+                            let x = Math.log(i) / scale;
+                            let x2 = Math.log(i + 1) / scale;
+                            x = Math.floor(x / factor) * factor;
+                            x2 = Math.floor(x2 / factor) * factor;
+                            const widthOfFreq = Math.ceil(
+                                Math.log(i + 1) / scale - Math.log(i) / scale
+                            );
+                                                    
+                            barHeight = dataArray[i];
+                            for (let k = x; k <= x + widthOfFreq; k = k + 1){
+                                if( k > 200 && k <= 250){
+                                    const ele = document.getElementById('bar__' + k);
+                                    if(ele){
+                                        ele.style.height =  (barHeight / HEIGHT *100) + '%';
+                                    }        
+                                }
+                                
+                            }
+                        }
+                    }
+                }
+            };
+        </script>
+    </head>
+    
+    <body>
+        <div id="content">
+            
+    
+
+    
+            <div id="bars" class="bars">
+                
+            </div>
+    
+            <div id="blocks" class="blocks">
+                
+            </div>
+    
+        <audio id="audio" controls loop  crossorigin="anonymous">
+            Your browser does not support the <code>audio</code> element.
+        </audio>
+
+
+        </div>
+    </body>
+    
+    </html>
